@@ -248,6 +248,13 @@
             display: inline-block;
         }
 
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 2.5rem 1rem;
+            font-style: italic;
+        }
+
         @media (max-width: 640px) {
             .title { font-size: 1.6rem; }
             th, td { padding: 0.8rem 0.75rem; }
@@ -264,7 +271,7 @@
             <p class="subtitle">Tabla de Posiciones General</p>
         </header>
 
-        <!-- Panel de Administración (Formulario Oculto) -->
+        <!-- Panel de Administración (Formulario Oculto por Defecto) -->
         <div class="admin-panel" id="adminPanel">
             <div class="admin-panel-header">
                 <span class="admin-title">📝 Registrar Nuevo Lanzamiento</span>
@@ -316,13 +323,8 @@
         const ADMIN_PASSWORD = "admin123";
         let isAdmin = false;
 
-        // Cargar datos guardados previamente en el navegador, o usar datos iniciales
-        const initialTeams = [
-            { id: 1, team: "IGNITIA", rocket: "Ignitia-1", theoreticalHeight: 140.0, sensorHeight: 142.0 },
-            { id: 2, team: "Apolo Group", rocket: "Saturn V", theoreticalHeight: 130.0, sensorHeight: 125.5 },
-            { id: 3, team: "Falcon X", rocket: "Heavy-1", theoreticalHeight: 100.0, sensorHeight: 110.0 },
-            { id: 4, team: "Artemis Team", rocket: "Orion-X", theoreticalHeight: 110.0, sensorHeight: 95.2 }
-        ];
+        // Arreglo inicial vacío (sin ningún registro por defecto)
+        const initialTeams = [];
 
         let teams = JSON.parse(localStorage.getItem('rocket_teams')) || initialTeams;
 
@@ -353,12 +355,23 @@
         }
 
         function renderLeaderboard() {
+            const tbody = document.getElementById('leaderboardBody');
+            tbody.innerHTML = '';
+
+            if (teams.length === 0) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td colspan="6" class="empty-state">
+                        Aún no hay equipos registrados. Haz clic en <strong>⚙️ Modo Admin</strong> para agregar el primer participante.
+                    </td>
+                `;
+                tbody.appendChild(tr);
+                return;
+            }
+
             const sorted = [...teams].sort((a, b) => {
                 return calculateError(a.theoreticalHeight, a.sensorHeight) - calculateError(b.theoreticalHeight, b.sensorHeight);
             });
-
-            const tbody = document.getElementById('leaderboardBody');
-            tbody.innerHTML = '';
 
             sorted.forEach((item, index) => {
                 const pos = index + 1;
