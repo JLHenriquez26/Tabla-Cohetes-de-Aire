@@ -112,7 +112,7 @@
 
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 1rem;
             margin-bottom: 1rem;
         }
@@ -262,6 +262,17 @@
         .pos-2 { background: rgba(203, 213, 225, 0.15); color: var(--silver); border: 1px solid var(--silver); }
         .pos-3 { background: rgba(217, 119, 6, 0.15); color: var(--bronze); border: 1px solid var(--bronze); }
 
+        .group-tag {
+            display: inline-block;
+            background: rgba(31, 41, 61, 0.8);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
         .team-name { font-weight: 700; color: var(--text-main); font-size: 1.05rem; }
         .rocket-name { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
 
@@ -321,6 +332,10 @@
             <form id="rocketForm" onsubmit="addTeam(event)">
                 <div class="form-grid">
                     <div class="form-group">
+                        <label>Grupo</label>
+                        <input type="text" id="groupName" required placeholder="Ej: Grupo A">
+                    </div>
+                    <div class="form-group">
                         <label>Nombre del Equipo</label>
                         <input type="text" id="teamName" required placeholder="Ej: IGNITIA">
                     </div>
@@ -345,7 +360,7 @@
         <div class="controls-wrapper">
             <div class="search-box">
                 <span class="search-icon">🔍</span>
-                <input type="text" id="searchInput" class="search-input" placeholder="Buscar equipo o cohete..." oninput="renderLeaderboard()">
+                <input type="text" id="searchInput" class="search-input" placeholder="Buscar equipo, cohete o grupo..." oninput="renderLeaderboard()">
             </div>
         </div>
 
@@ -355,6 +370,7 @@
                 <thead>
                     <tr>
                         <th style="text-align: center; width: 70px;">Pos</th>
+                        <th style="text-align: center;">Grupo</th>
                         <th>Equipo / Cohete</th>
                         <th style="text-align: center;">Alt. Teórica</th>
                         <th style="text-align: center;">Alt. Sensor</th>
@@ -414,7 +430,6 @@
                 
                 if (index > 0) {
                     const prevErrorPct = calculateError(sorted[index - 1].theoreticalHeight, sorted[index - 1].sensorHeight);
-                    // Si el % de error no es igual al del equipo anterior, actualizar la posición al índice actual + 1
                     if (errorPct !== prevErrorPct) {
                         currentPos = index + 1;
                     }
@@ -427,8 +442,9 @@
                 };
             });
 
-            // 3. Filtrar según el término de búsqueda
+            // 3. Filtrar según el término de búsqueda (equipo, cohete o grupo)
             const filteredTeams = rankedTeams.filter(item => 
+                (item.group && item.group.toLowerCase().includes(searchTerm)) ||
                 item.team.toLowerCase().includes(searchTerm) || 
                 item.rocket.toLowerCase().includes(searchTerm)
             );
@@ -439,11 +455,11 @@
             if (filteredTeams.length === 0) {
                 const emptyText = teams.length === 0 
                     ? "Aún no hay equipos registrados. Activa el <strong>Modo Admin</strong> para agregar lanzamientos."
-                    : "No se encontraron equipos que coincidan con la búsqueda.";
+                    : "No se encontraron resultados que coincidan con la búsqueda.";
 
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="empty-state">${emptyText}</td>
+                        <td colspan="7" class="empty-state">${emptyText}</td>
                     </tr>
                 `;
                 return;
@@ -460,6 +476,7 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td style="text-align: center;">${badgeHtml}</td>
+                    <td style="text-align: center;"><span class="group-tag">${escapeHtml(item.group || '-')}</span></td>
                     <td>
                         <div class="team-name">${escapeHtml(item.team)}</div>
                         <div class="rocket-name">Cohete: ${escapeHtml(item.rocket)}</div>
@@ -479,6 +496,7 @@
             e.preventDefault();
             const newTeam = {
                 id: Date.now(),
+                group: document.getElementById('groupName').value,
                 team: document.getElementById('teamName').value,
                 rocket: document.getElementById('rocketName').value,
                 theoreticalHeight: parseFloat(document.getElementById('theoreticalHeight').value),
