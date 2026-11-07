@@ -62,24 +62,18 @@
             letter-spacing: 0.5px;
         }
 
-        /* Botón Modo Admin */
+        /* Botón Modo Admin Oculto / Transparente pero clickeable */
         .admin-toggle-btn {
             position: absolute;
             top: 0;
-            right: -100px;
-            background: rgba(31, 41, 61, 0.6);
-            border: 1px solid var(--card-border);
-            color: var(--text-muted);
-            padding: 0.5rem 0.8rem;
-            border-radius: 8px;
+            right: 0;
+            width: 40px;
+            height: 40px;
+            background: transparent;
+            border: none;
+            color: transparent;
             cursor: pointer;
-            font-size: 0.8rem;
-            transition: all 0.2s;
-        }
-
-        .admin-toggle-btn:hover {
-            color: var(--neon-green);
-            border-color: var(--neon-green);
+            z-index: 10;
         }
 
         /* Tarjeta de Formulario (Oculta por defecto) */
@@ -308,7 +302,6 @@
         @media (max-width: 640px) {
             .title { font-size: 1.6rem; }
             th, td { padding: 0.8rem 0.75rem; }
-            .admin-toggle-btn { position: relative; margin-bottom: 1rem; }
             .controls-wrapper { justify-content: stretch; }
             .search-box { max-width: 100%; }
         }
@@ -318,8 +311,9 @@
 
     <div class="container" id="mainContainer">
         <header>
-            <button class="admin-toggle-btn" onclick="toggleAdminMode()" id="adminBtn">⚙️ Modo Admin</button>
-            <h1 class="title">🚀 Competencia de Cohetes de Aire</h1>
+            <!-- Botón invisible situado exactamente en la esquina superior derecha -->
+            <button class="admin-toggle-btn" onclick="toggleAdminMode()" id="adminBtn" title="Admin"></button>
+            <h1 class="title">🚀 Competencia de Cohetes</h1>
             <p class="subtitle">Tabla de Posiciones General</p>
         </header>
 
@@ -384,7 +378,7 @@
     </div>
 
     <script>
-        const ADMIN_PASSWORD = "adminRocketF1025Badmin";
+        const ADMIN_PASSWORD = "admin123";
         let isAdmin = false;
 
         let teams = JSON.parse(localStorage.getItem('rocket_teams')) || [];
@@ -402,7 +396,6 @@
                     isAdmin = true;
                     document.getElementById('adminPanel').classList.add('active');
                     document.getElementById('mainContainer').classList.add('admin-active');
-                    document.getElementById('adminBtn').textContent = "🔓 Salir de Admin";
                 } else if (pass !== null) {
                     alert("Contraseña incorrecta");
                 }
@@ -410,7 +403,6 @@
                 isAdmin = false;
                 document.getElementById('adminPanel').classList.remove('active');
                 document.getElementById('mainContainer').classList.remove('admin-active');
-                document.getElementById('adminBtn').textContent = "⚙️ Modo Admin";
             }
             renderLeaderboard();
         }
@@ -418,12 +410,10 @@
         function renderLeaderboard() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
 
-            // 1. Ordenar por menor porcentaje de error
             const sorted = [...teams].sort((a, b) => {
                 return calculateError(a.theoreticalHeight, a.sensorHeight) - calculateError(b.theoreticalHeight, b.sensorHeight);
             });
 
-            // 2. Asignar posiciones considerando empates en el % de Error
             let currentPos = 1;
             const rankedTeams = sorted.map((item, index) => {
                 const errorPct = calculateError(item.theoreticalHeight, item.sensorHeight);
@@ -442,7 +432,6 @@
                 };
             });
 
-            // 3. Filtrar según el término de búsqueda (equipo, cohete o grupo)
             const filteredTeams = rankedTeams.filter(item => 
                 (item.group && item.group.toLowerCase().includes(searchTerm)) ||
                 item.team.toLowerCase().includes(searchTerm) || 
@@ -454,7 +443,7 @@
 
             if (filteredTeams.length === 0) {
                 const emptyText = teams.length === 0 
-                    ? "Aún no hay equipos registrados."
+                    ? "Aún no hay equipos registrados. Haz clic en la esquina superior derecha e ingresa la clave de administrador para agregar lanzamientos."
                     : "No se encontraron resultados que coincidan con la búsqueda.";
 
                 tbody.innerHTML = `
