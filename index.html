@@ -40,10 +40,18 @@
             position: relative;
         }
 
+        /* Encabezado adaptable con flexbox */
         header {
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 2rem;
             position: relative;
+            padding: 0 0.5rem;
+        }
+
+        .header-content {
+            text-align: left;
         }
 
         .title {
@@ -60,6 +68,14 @@
             color: var(--text-muted);
             font-size: 1rem;
             letter-spacing: 0.5px;
+        }
+
+        /* Estilo del Logo a la derecha */
+        .logo-container img {
+            max-height: 70px;
+            width: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 0 8px rgba(0, 255, 135, 0.2));
         }
 
         /* Botón Modo Admin Oculto / Transparente pero clickeable */
@@ -300,6 +316,8 @@
         }
 
         @media (max-width: 640px) {
+            header { flex-direction: column-reverse; gap: 1rem; text-align: center; }
+            .header-content { text-align: center; }
             .title { font-size: 1.6rem; }
             th, td { padding: 0.8rem 0.75rem; }
             .controls-wrapper { justify-content: stretch; }
@@ -311,10 +329,19 @@
 
     <div class="container" id="mainContainer">
         <header>
-            <!-- Botón invisible situado exactamente en la esquina superior derecha -->
+            <!-- Botón invisible situado en la esquina superior derecha -->
             <button class="admin-toggle-btn" onclick="toggleAdminMode()" id="adminBtn" title="Admin"></button>
-            <h1 class="title">🚀 Competencia de Cohetes</h1>
-            <p class="subtitle">Tabla de Posiciones General</p>
+            
+            <!-- Título y subtítulo -->
+            <div class="header-content">
+                <h1 class="title">🚀 Competencia de Cohetes de Aire</h1>
+                <p class="subtitle">Tabla de Posiciones General</p>
+            </div>
+
+            <!-- Logo del Tec de Monterrey a la derecha -->
+            <div class="logo-container">
+                <img src="tecnologico-de-monterrey-blue.png" alt="Tecnológico de Monterrey">
+            </div>
         </header>
 
         <!-- Panel de Administración -->
