@@ -378,7 +378,7 @@
     </div>
 
     <script>
-        const ADMIN_PASSWORD = "admin123";
+        const ADMIN_PASSWORD = "RocketadminSpace";
         let isAdmin = false;
 
         let teams = JSON.parse(localStorage.getItem('rocket_teams')) || [];
@@ -443,7 +443,7 @@
 
             if (filteredTeams.length === 0) {
                 const emptyText = teams.length === 0 
-                    ? "Aún no hay equipos registrados. Haz clic en la esquina superior derecha e ingresa la clave de administrador para agregar lanzamientos."
+                    ? "Aún no hay equipos registrados."
                     : "No se encontraron resultados que coincidan con la búsqueda.";
 
                 tbody.innerHTML = `
