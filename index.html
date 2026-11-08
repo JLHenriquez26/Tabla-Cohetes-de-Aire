@@ -402,18 +402,11 @@
     </div>
 
     <script>
-        /////
-        const ADMIN_PASSWORD_HASH = "1b94b05ec2c9b4e3f898305988e401ecf156bc22ae1d62c90c74f5d81aa4cb96";
+        // Contraseña oculta mediante codificación (Corresponde a "RocketadminSpace")
+        const ADMIN_PASS_ENCODED = "Um9ja2V0YWRtaW5TcGFjZQ==";
         let isAdmin = false;
 
         let teams = JSON.parse(localStorage.getItem('rocket_teams')) || [];
-
-        async function sha256(message) {
-            const msgBuffer = new TextEncoder().encode(message);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
 
         function calculateError(theoretical, sensor) {
             if (!theoretical || theoretical === 0) return 0;
@@ -421,12 +414,12 @@
             return Math.round(error * 100) / 100;
         }
 
-        async function toggleAdminMode() {
+        function toggleAdminMode() {
             if (!isAdmin) {
                 const pass = prompt("Ingrese la contraseña de administrador:");
                 if (pass !== null) {
-                    const hashedInput = await sha256(pass);
-                    if (hashedInput === ADMIN_PASSWORD_HASH) {
+                    // Compara la contraseña ingresada decodificando la clave interna
+                    if (pass === atob(ADMIN_PASS_ENCODED)) {
                         isAdmin = true;
                         document.getElementById('adminPanel').classList.add('active');
                         document.getElementById('mainContainer').classList.add('admin-active');
