@@ -281,6 +281,7 @@
 
     <div class="container" id="mainContainer">
         <header>
+            <!-- Botón invisible en la esquina superior derecha para abrir admin -->
             <button class="admin-toggle-btn" onclick="toggleAdminMode()" id="adminBtn" title="Admin"></button>
             <div class="logo-container">
                 <img src="tecnologico-de-monterrey-blue.png" alt="Tecnológico de Monterrey">
@@ -290,6 +291,7 @@
             <p class="subtitle">Tabla de Posiciones General</p>
         </header>
 
+        <!-- Panel de Administración (Formulario) -->
         <div class="admin-panel" id="adminPanel">
             <div class="admin-panel-header">
                 <span class="admin-title">📝 Registrar Nuevo Lanzamiento</span>
@@ -349,7 +351,7 @@
 
     <script>
         // PEGA AQUÍ ABAJO TU URL DE GOOGLE APPS SCRIPT ENTRE LAS COMILLAS
-        const WEB_APP_URL = https://script.google.com/macros/s/AKfycbwtKBNGjlBFwHBTVGtQ-aSc9DjbpUreL9qJNMSkvk_iUCAr4mHgKXLRGtJJYLThA1CIxA/exec
+        const WEB_APP_URL = "PEGAR_AQUÍ_TU_URL_DE_GOOGLE_APPS_SCRIPT";
         
         const ADMIN_PASS_ENCODED = "Um9ja2V0YWRtaW5TcGFjZQ==";
         let isAdmin = false;
@@ -367,21 +369,21 @@
                 if (pass !== null) {
                     if (pass === atob(ADMIN_PASS_ENCODED)) {
                         isAdmin = true;
-                        document.getElementById('adminPanel').classList.add('active');
+                        document.getElementById('adminPanel').classList.add('active'); // <-- Esto abre el panel
                     } else {
                         alert("Contraseña incorrecta");
                     }
                 }
             } else {
                 isAdmin = false;
-                document.getElementById('adminPanel').classList.remove('active');
+                document.getElementById('adminPanel').classList.remove('active'); // <-- Esto lo cierra
             }
         }
 
         // Cargar datos desde Google Sheets al abrir la página
         async function fetchTeams() {
             if (WEB_APP_URL.includes("PEGAR_AQUÍ")) {
-                document.getElementById('statusMsginnerText = "⚠️ Falta configurar la URL de Google Sheets";
+                document.getElementById('statusMsg').innerText = "⚠️ Falta configurar la URL de Google Sheets";
                 return;
             }
             try {
@@ -463,7 +465,7 @@
             try {
                 await fetch(WEB_APP_URL, {
                     method: "POST",
-                    mode: "no-cors", // Requerido para Google Apps Script Webhooks
+                    mode: "no-cors",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(newTeam)
                 });
@@ -471,7 +473,6 @@
                 document.getElementById('rocketForm').reset();
                 document.getElementById('adminPanel').classList.remove('active');
                 
-                // Recargar datos de la tabla después de un par de segundos
                 setTimeout(fetchTeams, 1500);
             } catch (error) {
                 alert("Error al guardar el registro.");
@@ -486,10 +487,9 @@
             return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
         }
 
-        // Cargar registros al abrir la página y actualizar automáticamente cada 10 segundos
         window.onload = () => {
             fetchTeams();
-            setInterval(fetchTeams, 10000); // Se sincroniza solo cada 10s
+            setInterval(fetchTeams, 10000);
         };
     </script>
 </body>
