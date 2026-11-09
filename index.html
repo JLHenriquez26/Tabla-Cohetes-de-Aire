@@ -36,11 +36,13 @@
         .container {
             width: 100%;
             max-width: 950px;
+            position: relative;
         }
 
         header {
             text-align: center;
             margin-bottom: 2rem;
+            position: relative;
         }
 
         .logo-container {
@@ -73,24 +75,18 @@
             letter-spacing: 0.5px;
         }
 
-        .admin-trigger-container {
-            text-align: right;
-            margin-bottom: 1rem;
-        }
-
-        .btn-admin-access {
-            background: rgba(0, 255, 135, 0.1);
-            border: 1px solid var(--neon-green);
-            color: var(--neon-green);
-            padding: 0.4rem 0.9rem;
-            border-radius: 6px;
+        /* Botón invisible de administrador en la esquina superior derecha */
+        .admin-toggle-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50px;
+            height: 50px;
+            background: transparent;
+            border: none;
+            outline: none;
             cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 600;
-            transition: background 0.2s;
-        }
-        .btn-admin-access:hover {
-            background: rgba(0, 255, 135, 0.25);
+            z-index: 50;
         }
 
         .admin-panel {
@@ -288,6 +284,8 @@
 
     <div class="container">
         <header>
+            <!-- Botón invisible de administrador en la esquina superior derecha -->
+            <button class="admin-toggle-btn" onclick="toggleAdminMode()" title="Administrador"></button>
             <div class="logo-container">
                 <img src="tecnologico-de-monterrey-blue.png" alt="Tecnológico de Monterrey">
             </div>
@@ -295,10 +293,6 @@
             <p class="subtitle">UNIDAD DE FORMACIÓN F1025B</p>
             <p class="subtitle">Tabla de Posiciones General</p>
         </header>
-
-        <div class="admin-trigger-container">
-            <button class="btn-admin-access" onclick="toggleAdminMode()" id="adminToggleText">⚙️ Modo Administrador</button>
-        </div>
 
         <div class="admin-panel" id="adminPanel">
             <div class="admin-panel-header">
@@ -342,7 +336,7 @@
 
         <div class="table-wrapper">
             <table>
-                <thead id="tableHead">
+                <thead>
                     <tr>
                         <th style="text-align: center; width: 70px;">POS</th>
                         <th style="text-align: center;">GRUPO</th>
@@ -375,7 +369,6 @@
 
         function toggleAdminMode() {
             const panel = document.getElementById('adminPanel');
-            const adminToggleText = document.getElementById('adminToggleText');
 
             if (!isAdmin) {
                 const pass = prompt("Ingrese la contraseña de administrador:");
@@ -383,10 +376,6 @@
                     if (pass === atob(ADMIN_PASS_ENCODED)) {
                         isAdmin = true;
                         panel.classList.add('active');
-                        adminToggleText.innerText = "🔒 Cerrar Modo Administrador";
-                        adminToggleText.style.borderColor = "var(--danger)";
-                        adminToggleText.style.color = "var(--danger)";
-                        renderLeaderboard();
                     } else {
                         alert("Contraseña incorrecta");
                     }
@@ -394,10 +383,6 @@
             } else {
                 isAdmin = false;
                 panel.classList.remove('active');
-                adminToggleText.innerText = "⚙️ Modo Administrador";
-                adminToggleText.style.borderColor = "var(--neon-green)";
-                adminToggleText.style.color = "var(--neon-green)";
-                renderLeaderboard();
             }
         }
 
@@ -408,7 +393,6 @@
                 teams = await response.json();
                 renderLeaderboard();
                 
-                // Actualiza el texto de sincronización con la hora actual
                 const now = new Date();
                 const timeString = now.toLocaleTimeString();
                 document.getElementById('syncStatus').innerText = `🟢 Última actualización: ${timeString}`;
@@ -469,13 +453,49 @@
             });
         }
 
+        async function addTeam(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.innerText = "Guardando en la nube...";
+            submitBtn.disabled = true;
+
+            const newTeam = {
+                group: document.getElementById('groupName').value,
+                team: document.getElementById('teamName').value,
+                rocket: document.getElementById('rocketName').value,
+                theoreticalHeight: parseFloat(document.getElementById('theoreticalHeight').value),
+                sensorHeight: parseFloat(document.getElementById('sensorHeight').value)
+            };
+
+            try {
+                await fetch(WEB_APP_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify(newTeam)
+                });
+
+                document.getElementById('rocketForm').reset();
+                document.getElementById('adminPanel').classList.remove('active');
+                isAdmin = false;
+                
+                setTimeout(fetchTeams, 1500);
+            } catch (error) {
+                alert("Error al guardar el registro.");
+                console.error(error);
+            } finally {
+                submitBtn.innerText = "Guardar Registro en la Nube";
+                submitBtn.disabled = false;
+            }
+        }
+
         function escapeHtml(str) {
             return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
         }
 
         window.onload = () => {
             fetchTeams();
-            setInterval(fetchTeams, 10000); // Se actualiza automáticamente cada 10 segundos
+            setInterval(fetchTeams, 10000);
         };
     </script>
 </body>
