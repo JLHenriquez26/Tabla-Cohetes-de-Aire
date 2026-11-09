@@ -15,6 +15,7 @@
             --gold: #fbbf24;
             --silver: #cbd5e1;
             --bronze: #d97706;
+            --danger: #ef4444;
         }
 
         * {
@@ -272,10 +273,24 @@
             text-align: right;
         }
 
+        .btn-delete {
+            background: transparent;
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: none; /* Oculto por defecto */
+            transition: background 0.2s;
+        }
+        .btn-delete:hover { background: rgba(239, 68, 68, 0.15); }
+        .admin-mode .btn-delete { display: inline-block; } /* Se muestra en modo admin */
+
         .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--text-muted); }
     </style>
 </head>
-<body>
+<body id="bodyTag">
 
     <div class="container" id="mainContainer">
         <header>
@@ -339,6 +354,7 @@
                         <th style="text-align: center;">ALT. TEÓRICA</th>
                         <th style="text-align: center;">ALT. SENSOR</th>
                         <th style="text-align: right;">% ERROR</th>
+                        <th style="text-align: center; width: 80px;" class="admin-col" id="thAction" style="display:none;">ACCIONES</th>
                     </tr>
                 </thead>
                 <tbody id="leaderboardBody"></tbody>
@@ -362,12 +378,18 @@
 
         function toggleAdminMode() {
             const panel = document.getElementById('adminPanel');
+            const bodyTag = document.getElementById('bodyTag');
+            const thAction = document.getElementById('thAction');
+
             if (!isAdmin) {
                 const pass = prompt("Ingrese la contraseña de administrador:");
                 if (pass !== null) {
                     if (pass === atob(ADMIN_PASS_ENCODED)) {
                         isAdmin = true;
                         panel.classList.add('active');
+                        bodyTag.classList.add('admin-mode');
+                        if(thAction) thAction.style.display = 'table-cell';
+                        renderLeaderboard();
                     } else {
                         alert("Contraseña incorrecta");
                     }
@@ -375,6 +397,9 @@
             } else {
                 isAdmin = false;
                 panel.classList.remove('active');
+                bodyTag.classList.remove('admin-mode');
+                if(thAction) thAction.style.display = 'none';
+                renderLeaderboard();
             }
         }
 
@@ -413,7 +438,8 @@
             tbody.innerHTML = '';
 
             if (filteredTeams.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${teams.length === 0 ? "Aún no hay equipos registrados en la nube." : "No se encontraron resultados."}</td></tr>`;
+                const colSpan = isAdmin ? 7 : 6;
+                tbody.innerHTML = `<tr><td colspan="${colSpan}" class="empty-state">${teams.length === 0 ? "Aún no hay equipos registrados en la nube." : "No se encontraron resultados."}</td></tr>`;
                 return;
             }
 
@@ -425,6 +451,11 @@
                 else if (pos === 3) badgeHtml = `<span class="pos-badge pos-3">🥉 3</span>`;
 
                 const tr = document.createElement('tr');
+                let adminCellHtml = '';
+                if (isAdmin) {
+                    adminCellHtml = `<td style="text-align: center;"><button class="btn-delete" onclick="deleteTeam(${item.id})">🗑️ Borrar</button></td>`;
+                }
+
                 tr.innerHTML = `
                     <td style="text-align: center;">${badgeHtml}</td>
                     <td style="text-align: center;"><span class="group-tag">${escapeHtml(item.group || '-')}</span></td>
@@ -435,6 +466,7 @@
                     <td style="text-align: center;">${item.theoreticalHeight} m</td>
                     <td style="text-align: center;">${item.sensorHeight} m</td>
                     <td class="error-val">${item.errorPct}%</td>
+                    ${adminCellHtml}
                 `;
                 tbody.appendChild(tr);
             });
@@ -464,7 +496,6 @@
 
                 document.getElementById('rocketForm').reset();
                 document.getElementById('adminPanel').classList.remove('active');
-                isAdmin = false;
                 
                 setTimeout(fetchTeams, 1500);
             } catch (error) {
@@ -473,6 +504,24 @@
             } finally {
                 submitBtn.innerText = "Guardar Registro en la Nube";
                 submitBtn.disabled = false;
+            }
+        }
+
+        async function deleteTeam(id) {
+            if (!confirm("¿Estás seguro de eliminar este registro?")) return;
+
+            try {
+                await fetch(WEB_APP_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ action: "delete", id: id })
+                });
+
+                setTimeout(fetchTeams, 1500);
+            } catch (error) {
+                alert("Error al eliminar el registro.");
+                console.error(error);
             }
         }
 
