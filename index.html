@@ -281,11 +281,11 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 0.85rem;
-            display: none; /* Oculto por defecto */
+            display: none;
             transition: background 0.2s;
         }
         .btn-delete:hover { background: rgba(239, 68, 68, 0.15); }
-        .admin-mode .btn-delete { display: inline-block; } /* Se muestra en modo admin */
+        .admin-mode .btn-delete { display: inline-block; }
 
         .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--text-muted); }
     </style>
@@ -294,7 +294,6 @@
 
     <div class="container" id="mainContainer">
         <header>
-            <!-- Botón invisible para activar el panel de administrador -->
             <button class="admin-toggle-btn" onclick="toggleAdminMode()" id="adminBtn" title="Administrador"></button>
             <div class="logo-container">
                 <img src="tecnologico-de-monterrey-blue.png" alt="Tecnológico de Monterrey">
@@ -304,7 +303,6 @@
             <p class="subtitle">Tabla de Posiciones General</p>
         </header>
 
-        <!-- Panel de Administración para el registro -->
         <div class="admin-panel" id="adminPanel">
             <div class="admin-panel-header">
                 <span class="admin-title">📝 Registrar Nuevo Lanzamiento</span>
@@ -354,7 +352,7 @@
                         <th style="text-align: center;">ALT. TEÓRICA</th>
                         <th style="text-align: center;">ALT. SENSOR</th>
                         <th style="text-align: right;">% ERROR</th>
-                        <th style="text-align: center; width: 80px;" class="admin-col" id="thAction" style="display:none;">ACCIONES</th>
+                        <th style="text-align: center; width: 90px; display: none;" id="thAction">ACCIONES</th>
                     </tr>
                 </thead>
                 <tbody id="leaderboardBody"></tbody>
@@ -363,7 +361,7 @@
     </div>
 
     <script>
-        // Pega aquí tu URL de Google Apps Script entre las comillas
+        // Pega aquí tu URL de Google Apps Script
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzBa-qR9Sm5gr-j0fJNTkktGA5ce7u3qDD6ktU0SBDASxkASP5KYwydesXrdVXXG0Bi/exec";
         
         const ADMIN_PASS_ENCODED = "Um9ja2V0YWRtaW5TcGFjZQ==";
