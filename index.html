@@ -90,7 +90,6 @@
             z-index: 50;
         }
 
-        /* Panel de Administración */
         .admin-panel {
             display: none;
             background: var(--card-bg);
@@ -101,9 +100,7 @@
             box-shadow: 0 0 15px rgba(0, 255, 135, 0.15);
         }
 
-        .admin-panel.active { 
-            display: block; 
-        }
+        .admin-panel.active { display: block; }
 
         .admin-panel-header {
             display: flex;
@@ -342,16 +339,8 @@
 
         <div class="table-wrapper">
             <table>
-                <thead>
-                    <tr>
-                        <th style="text-align: center; width: 70px;">POS</th>
-                        <th style="text-align: center;">GRUPO</th>
-                        <th>EQUIPO / COHETE</th>
-                        <th style="text-align: center;">ALT. TEÓRICA</th>
-                        <th style="text-align: center;">ALT. SENSOR</th>
-                        <th style="text-align: right;">% ERROR</th>
-                        <th style="text-align: center; width: 90px;" id="thAction">ACCIONES</th>
-                    </tr>
+                <thead id="tableHead">
+                    <!-- El encabezado se genera dinámicamente según el modo -->
                 </thead>
                 <tbody id="leaderboardBody"></tbody>
             </table>
@@ -359,7 +348,7 @@
     </div>
 
     <script>
-        // Pega aquí tu URL de Google Apps Script
+        // Pega aquí tu nueva URL de Google Apps Script de tu cuenta personal
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzBa-qR9Sm5gr-j0fJNTkktGA5ce7u3qDD6ktU0SBDASxkASP5KYwydesXrdVXXG0Bi/exec";
         
         const ADMIN_PASS_ENCODED = "Um9ja2V0YWRtaW5TcGFjZQ==";
@@ -374,7 +363,6 @@
 
         function toggleAdminMode() {
             const panel = document.getElementById('adminPanel');
-            const thAction = document.getElementById('thAction');
 
             if (!isAdmin) {
                 const pass = prompt("Ingrese la contraseña de administrador:");
@@ -382,7 +370,6 @@
                     if (pass === atob(ADMIN_PASS_ENCODED)) {
                         isAdmin = true;
                         panel.classList.add('active');
-                        thAction.style.display = 'table-cell';
                         renderLeaderboard();
                     } else {
                         alert("Contraseña incorrecta");
@@ -391,7 +378,6 @@
             } else {
                 isAdmin = false;
                 panel.classList.remove('active');
-                thAction.style.display = 'none';
                 renderLeaderboard();
             }
         }
@@ -408,6 +394,33 @@
         }
 
         function renderLeaderboard() {
+            // 1. Dibujar el encabezado dinámicamente
+            const thead = document.getElementById('tableHead');
+            if (isAdmin) {
+                thead.innerHTML = `
+                    <tr>
+                        <th style="text-align: center; width: 70px;">POS</th>
+                        <th style="text-align: center;">GRUPO</th>
+                        <th>EQUIPO / COHETE</th>
+                        <th style="text-align: center;">ALT. TEÓRICA</th>
+                        <th style="text-align: center;">ALT. SENSOR</th>
+                        <th style="text-align: right;">% ERROR</th>
+                        <th style="text-align: center; width: 90px;">ACCIONES</th>
+                    </tr>
+                `;
+            } else {
+                thead.innerHTML = `
+                    <tr>
+                        <th style="text-align: center; width: 70px;">POS</th>
+                        <th style="text-align: center;">GRUPO</th>
+                        <th>EQUIPO / COHETE</th>
+                        <th style="text-align: center;">ALT. TEÓRICA</th>
+                        <th style="text-align: center;">ALT. SENSOR</th>
+                        <th style="text-align: right;">% ERROR</th>
+                    </tr>
+                `;
+            }
+
             const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
             const sorted = [...teams].sort((a, b) => calculateError(a.theoreticalHeight, a.sensorHeight) - calculateError(b.theoreticalHeight, b.sensorHeight));
 
@@ -429,8 +442,6 @@
 
             const tbody = document.getElementById('leaderboardBody');
             tbody.innerHTML = '';
-            const thAction = document.getElementById('thAction');
-            if(thAction) thAction.style.display = isAdmin ? 'table-cell' : 'none';
 
             if (filteredTeams.length === 0) {
                 const colSpan = isAdmin ? 7 : 6;
@@ -493,7 +504,6 @@
                 document.getElementById('rocketForm').reset();
                 document.getElementById('adminPanel').classList.remove('active');
                 isAdmin = false;
-                document.getElementById('thAction').style.display = 'none';
                 
                 setTimeout(fetchTeams, 1500);
             } catch (error) {
