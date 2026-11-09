@@ -15,7 +15,6 @@
             --gold: #fbbf24;
             --silver: #cbd5e1;
             --bronze: #d97706;
-            --danger: #ef4444;
         }
 
         * {
@@ -99,9 +98,7 @@
             box-shadow: 0 0 15px rgba(0, 255, 135, 0.15);
         }
 
-        .admin-panel.active {
-            display: block;
-        }
+        .admin-panel.active { display: block; }
 
         .admin-panel-header {
             display: flex;
@@ -144,9 +141,7 @@
             outline: none;
         }
 
-        .form-group input:focus {
-            border-color: var(--neon-green);
-        }
+        .form-group input:focus { border-color: var(--neon-green); }
 
         .btn-submit {
             background: var(--neon-green);
@@ -164,8 +159,14 @@
 
         .controls-wrapper {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 1rem;
+        }
+
+        .loading-text {
+            font-size: 0.85rem;
+            color: var(--neon-green);
         }
 
         .search-box {
@@ -183,7 +184,6 @@
             color: var(--text-main);
             font-size: 0.9rem;
             outline: none;
-            transition: border-color 0.2s;
         }
 
         .search-input:focus { border-color: var(--neon-green); }
@@ -274,18 +274,6 @@
             text-align: right;
         }
 
-        .btn-delete {
-            background: transparent;
-            border: none;
-            color: var(--danger);
-            cursor: pointer;
-            padding: 0.3rem 0.6rem;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            display: none;
-        }
-
-        .admin-active .btn-delete { display: inline-block; }
         .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--text-muted); }
     </style>
 </head>
@@ -330,11 +318,12 @@
                         <input type="number" step="0.01" id="sensorHeight" required placeholder="Ej: 145.2">
                     </div>
                 </div>
-                <button type="submit" class="btn-submit">Guardar Registro</button>
+                <button type="submit" class="btn-submit" id="submitBtn">Guardar Registro en la Nube</button>
             </form>
         </div>
 
         <div class="controls-wrapper">
+            <div id="statusMsg" class="loading-text">🔄 Sincronizando datos...</div>
             <div class="search-box">
                 <span class="search-icon">🔍</span>
                 <input type="text" id="searchInput" class="search-input" placeholder="Buscar equipo, cohete o grupo..." oninput="renderLeaderboard()">
@@ -351,7 +340,6 @@
                         <th style="text-align: center;">Alt. Teórica</th>
                         <th style="text-align: center;">Alt. Sensor</th>
                         <th style="text-align: right;">% Error</th>
-                        <th class="admin-only-col" style="width: 50px;"></th>
                     </tr>
                 </thead>
                 <tbody id="leaderboardBody"></tbody>
@@ -360,9 +348,12 @@
     </div>
 
     <script>
+        // PEGA AQUÍ ABAJO TU URL DE GOOGLE APPS SCRIPT ENTRE LAS COMILLAS
+        const WEB_APP_URL = https://script.google.com/macros/s/AKfycbwtKBNGjlBFwHBTVGtQ-aSc9DjbpUreL9qJNMSkvk_iUCAr4mHgKXLRGtJJYLThA1CIxA/exec
+        
         const ADMIN_PASS_ENCODED = "Um9ja2V0YWRtaW5TcGFjZQ==";
         let isAdmin = false;
-        let teams = JSON.parse(localStorage.getItem('rocket_teams_aire')) || [];
+        let teams = [];
 
         function calculateError(theoretical, sensor) {
             if (!theoretical || theoretical === 0) return 0;
@@ -377,7 +368,6 @@
                     if (pass === atob(ADMIN_PASS_ENCODED)) {
                         isAdmin = true;
                         document.getElementById('adminPanel').classList.add('active');
-                        document.getElementById('mainContainer').classList.add('admin-active');
                     } else {
                         alert("Contraseña incorrecta");
                     }
@@ -385,9 +375,24 @@
             } else {
                 isAdmin = false;
                 document.getElementById('adminPanel').classList.remove('active');
-                document.getElementById('mainContainer').classList.remove('admin-active');
             }
-            renderLeaderboard();
+        }
+
+        // Cargar datos desde Google Sheets al abrir la página
+        async function fetchTeams() {
+            if (WEB_APP_URL.includes("PEGAR_AQUÍ")) {
+                document.getElementById('statusMsginnerText = "⚠️ Falta configurar la URL de Google Sheets";
+                return;
+            }
+            try {
+                const response = await fetch(WEB_APP_URL);
+                teams = await response.json();
+                document.getElementById('statusMsg').innerText = "✅ Sincronizado en tiempo real";
+                renderLeaderboard();
+            } catch (error) {
+                document.getElementById('statusMsg').innerText = "❌ Error de conexión";
+                console.error("Error al obtener datos:", error);
+            }
         }
 
         function renderLeaderboard() {
@@ -414,7 +419,7 @@
             tbody.innerHTML = '';
 
             if (filteredTeams.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="empty-state">${teams.length === 0 ? "Aún no hay equipos registrados." : "No se encontraron resultados."}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${teams.length === 0 ? "Aún no hay equipos registrados en la nube." : "No se encontraron resultados."}</td></tr>`;
                 return;
             }
 
@@ -436,44 +441,56 @@
                     <td style="text-align: center;">${item.theoreticalHeight} m</td>
                     <td style="text-align: center;">${item.sensorHeight} m</td>
                     <td class="error-val">${item.errorPct}%</td>
-                    <td style="text-align: center;">${isAdmin ? `<button class="btn-delete" onclick="deleteTeam(${item.id})">🗑️</button>` : ''}</td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        function addTeam(e) {
+        async function addTeam(e) {
             e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.innerText = "Guardando en la nube...";
+            submitBtn.disabled = true;
+
             const newTeam = {
-                id: Date.now(),
                 group: document.getElementById('groupName').value,
                 team: document.getElementById('teamName').value,
                 rocket: document.getElementById('rocketName').value,
                 theoreticalHeight: parseFloat(document.getElementById('theoreticalHeight').value),
                 sensorHeight: parseFloat(document.getElementById('sensorHeight').value)
             };
-            teams.push(newTeam);
-            saveAndRender();
-            document.getElementById('rocketForm').reset();
-        }
 
-        function deleteTeam(id) {
-            if (confirm("¿Estás seguro de eliminar este registro?")) {
-                teams = teams.filter(t => t.id !== id);
-                saveAndRender();
+            try {
+                await fetch(WEB_APP_URL, {
+                    method: "POST",
+                    mode: "no-cors", // Requerido para Google Apps Script Webhooks
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(newTeam)
+                });
+
+                document.getElementById('rocketForm').reset();
+                document.getElementById('adminPanel').classList.remove('active');
+                
+                // Recargar datos de la tabla después de un par de segundos
+                setTimeout(fetchTeams, 1500);
+            } catch (error) {
+                alert("Error al guardar el registro.");
+                console.error(error);
+            } finally {
+                submitBtn.innerText = "Guardar Registro en la Nube";
+                submitBtn.disabled = false;
             }
-        }
-
-        function saveAndRender() {
-            localStorage.setItem('rocket_teams_aire', JSON.stringify(teams));
-            renderLeaderboard();
         }
 
         function escapeHtml(str) {
             return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
         }
 
-        window.onload = renderLeaderboard;
+        // Cargar registros al abrir la página y actualizar automáticamente cada 10 segundos
+        window.onload = () => {
+            fetchTeams();
+            setInterval(fetchTeams, 10000); // Se sincroniza solo cada 10s
+        };
     </script>
 </body>
 </html>
