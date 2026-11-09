@@ -15,7 +15,6 @@
             --gold: #fbbf24;
             --silver: #cbd5e1;
             --bronze: #d97706;
-            --danger: #ef4444;
         }
 
         * {
@@ -37,13 +36,11 @@
         .container {
             width: 100%;
             max-width: 950px;
-            position: relative;
         }
 
         header {
             text-align: center;
             margin-bottom: 2rem;
-            position: relative;
         }
 
         .logo-container {
@@ -76,18 +73,24 @@
             letter-spacing: 0.5px;
         }
 
-        /* Botón invisible de administrador en la esquina superior derecha */
-        .admin-toggle-btn {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 50px;
-            height: 50px;
-            background: transparent;
-            border: none;
-            outline: none;
+        .admin-trigger-container {
+            text-align: right;
+            margin-bottom: 1rem;
+        }
+
+        .btn-admin-access {
+            background: rgba(0, 255, 135, 0.1);
+            border: 1px solid var(--neon-green);
+            color: var(--neon-green);
+            padding: 0.4rem 0.9rem;
+            border-radius: 6px;
             cursor: pointer;
-            z-index: 50;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .btn-admin-access:hover {
+            background: rgba(0, 255, 135, 0.25);
         }
 
         .admin-panel {
@@ -161,8 +164,16 @@
 
         .controls-wrapper {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .sync-status {
+            font-size: 0.85rem;
+            color: var(--text-muted);
         }
 
         .search-box {
@@ -270,18 +281,6 @@
             text-align: right;
         }
 
-        .btn-delete {
-            background: transparent;
-            border: 1px solid var(--danger);
-            color: var(--danger);
-            padding: 0.3rem 0.6rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: background 0.2s;
-        }
-        .btn-delete:hover { background: rgba(239, 68, 68, 0.15); }
-
         .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--text-muted); }
     </style>
 </head>
@@ -289,7 +288,6 @@
 
     <div class="container">
         <header>
-            <button class="admin-toggle-btn" onclick="toggleAdminMode()" title="Administrador"></button>
             <div class="logo-container">
                 <img src="tecnologico-de-monterrey-blue.png" alt="Tecnológico de Monterrey">
             </div>
@@ -297,6 +295,10 @@
             <p class="subtitle">UNIDAD DE FORMACIÓN F1025B</p>
             <p class="subtitle">Tabla de Posiciones General</p>
         </header>
+
+        <div class="admin-trigger-container">
+            <button class="btn-admin-access" onclick="toggleAdminMode()" id="adminToggleText">⚙️ Modo Administrador</button>
+        </div>
 
         <div class="admin-panel" id="adminPanel">
             <div class="admin-panel-header">
@@ -331,6 +333,7 @@
         </div>
 
         <div class="controls-wrapper">
+            <div class="sync-status" id="syncStatus">🔄 Sincronizando datos con la nube...</div>
             <div class="search-box">
                 <span class="search-icon">🔍</span>
                 <input type="text" id="searchInput" class="search-input" placeholder="Buscar equipo, cohete o grupo..." oninput="renderLeaderboard()">
@@ -340,15 +343,24 @@
         <div class="table-wrapper">
             <table>
                 <thead id="tableHead">
-                    <!-- El encabezado se genera dinámicamente según el modo -->
+                    <tr>
+                        <th style="text-align: center; width: 70px;">POS</th>
+                        <th style="text-align: center;">GRUPO</th>
+                        <th>EQUIPO / COHETE</th>
+                        <th style="text-align: center;">ALT. TEÓRICA</th>
+                        <th style="text-align: center;">ALT. SENSOR</th>
+                        <th style="text-align: right;">% ERROR</th>
+                    </tr>
                 </thead>
-                <tbody id="leaderboardBody"></tbody>
+                <tbody id="leaderboardBody">
+                    <tr><td colspan="6" class="empty-state">Cargando registros...</td></tr>
+                </tbody>
             </table>
         </div>
     </div>
 
     <script>
-        // Pega aquí tu nueva URL de Google Apps Script de tu cuenta personal
+        // Pega aquí tu URL de Google Apps Script
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzBa-qR9Sm5gr-j0fJNTkktGA5ce7u3qDD6ktU0SBDASxkASP5KYwydesXrdVXXG0Bi/exec";
         
         const ADMIN_PASS_ENCODED = "Um9ja2V0YWRtaW5TcGFjZQ==";
@@ -363,6 +375,7 @@
 
         function toggleAdminMode() {
             const panel = document.getElementById('adminPanel');
+            const adminToggleText = document.getElementById('adminToggleText');
 
             if (!isAdmin) {
                 const pass = prompt("Ingrese la contraseña de administrador:");
@@ -370,6 +383,9 @@
                     if (pass === atob(ADMIN_PASS_ENCODED)) {
                         isAdmin = true;
                         panel.classList.add('active');
+                        adminToggleText.innerText = "🔒 Cerrar Modo Administrador";
+                        adminToggleText.style.borderColor = "var(--danger)";
+                        adminToggleText.style.color = "var(--danger)";
                         renderLeaderboard();
                     } else {
                         alert("Contraseña incorrecta");
@@ -378,6 +394,9 @@
             } else {
                 isAdmin = false;
                 panel.classList.remove('active');
+                adminToggleText.innerText = "⚙️ Modo Administrador";
+                adminToggleText.style.borderColor = "var(--neon-green)";
+                adminToggleText.style.color = "var(--neon-green)";
                 renderLeaderboard();
             }
         }
@@ -388,39 +407,18 @@
                 const response = await fetch(WEB_APP_URL);
                 teams = await response.json();
                 renderLeaderboard();
+                
+                // Actualiza el texto de sincronización con la hora actual
+                const now = new Date();
+                const timeString = now.toLocaleTimeString();
+                document.getElementById('syncStatus').innerText = `🟢 Última actualización: ${timeString}`;
             } catch (error) {
                 console.error("Error al obtener datos:", error);
+                document.getElementById('syncStatus').innerText = "⚠️ Error al sincronizar con la nube";
             }
         }
 
         function renderLeaderboard() {
-            // 1. Dibujar el encabezado dinámicamente
-            const thead = document.getElementById('tableHead');
-            if (isAdmin) {
-                thead.innerHTML = `
-                    <tr>
-                        <th style="text-align: center; width: 70px;">POS</th>
-                        <th style="text-align: center;">GRUPO</th>
-                        <th>EQUIPO / COHETE</th>
-                        <th style="text-align: center;">ALT. TEÓRICA</th>
-                        <th style="text-align: center;">ALT. SENSOR</th>
-                        <th style="text-align: right;">% ERROR</th>
-                        <th style="text-align: center; width: 90px;">ACCIONES</th>
-                    </tr>
-                `;
-            } else {
-                thead.innerHTML = `
-                    <tr>
-                        <th style="text-align: center; width: 70px;">POS</th>
-                        <th style="text-align: center;">GRUPO</th>
-                        <th>EQUIPO / COHETE</th>
-                        <th style="text-align: center;">ALT. TEÓRICA</th>
-                        <th style="text-align: center;">ALT. SENSOR</th>
-                        <th style="text-align: right;">% ERROR</th>
-                    </tr>
-                `;
-            }
-
             const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
             const sorted = [...teams].sort((a, b) => calculateError(a.theoreticalHeight, a.sensorHeight) - calculateError(b.theoreticalHeight, b.sensorHeight));
 
@@ -444,8 +442,7 @@
             tbody.innerHTML = '';
 
             if (filteredTeams.length === 0) {
-                const colSpan = isAdmin ? 7 : 6;
-                tbody.innerHTML = `<tr><td colspan="${colSpan}" class="empty-state">${teams.length === 0 ? "Aún no hay equipos registrados en la nube." : "No se encontraron resultados."}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${teams.length === 0 ? "Aún no hay equipos registrados en la nube." : "No se encontraron resultados."}</td></tr>`;
                 return;
             }
 
@@ -457,12 +454,6 @@
                 else if (pos === 3) badgeHtml = `<span class="pos-badge pos-3">🥉 3</span>`;
 
                 const tr = document.createElement('tr');
-                
-                let adminCellHtml = '';
-                if (isAdmin) {
-                    adminCellHtml = `<td style="text-align: center;"><button class="btn-delete" onclick="deleteTeam(${item.id})">🗑️ Borrar</button></td>`;
-                }
-
                 tr.innerHTML = `
                     <td style="text-align: center;">${badgeHtml}</td>
                     <td style="text-align: center;"><span class="group-tag">${escapeHtml(item.group || '-')}</span></td>
@@ -473,64 +464,9 @@
                     <td style="text-align: center;">${item.theoreticalHeight} m</td>
                     <td style="text-align: center;">${item.sensorHeight} m</td>
                     <td class="error-val">${item.errorPct}%</td>
-                    ${adminCellHtml}
                 `;
                 tbody.appendChild(tr);
             });
-        }
-
-        async function addTeam(e) {
-            e.preventDefault();
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.innerText = "Guardando en la nube...";
-            submitBtn.disabled = true;
-
-            const newTeam = {
-                group: document.getElementById('groupName').value,
-                team: document.getElementById('teamName').value,
-                rocket: document.getElementById('rocketName').value,
-                theoreticalHeight: parseFloat(document.getElementById('theoreticalHeight').value),
-                sensorHeight: parseFloat(document.getElementById('sensorHeight').value)
-            };
-
-            try {
-                await fetch(WEB_APP_URL, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify(newTeam)
-                });
-
-                document.getElementById('rocketForm').reset();
-                document.getElementById('adminPanel').classList.remove('active');
-                isAdmin = false;
-                
-                setTimeout(fetchTeams, 1500);
-            } catch (error) {
-                alert("Error al guardar el registro.");
-                console.error(error);
-            } finally {
-                submitBtn.innerText = "Guardar Registro en la Nube";
-                submitBtn.disabled = false;
-            }
-        }
-
-        async function deleteTeam(id) {
-            if (!confirm("¿Estás seguro de eliminar este registro?")) return;
-
-            try {
-                await fetch(WEB_APP_URL, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({ action: "delete", id: id })
-                });
-
-                setTimeout(fetchTeams, 1500);
-            } catch (error) {
-                alert("Error al eliminar el registro.");
-                console.error(error);
-            }
         }
 
         function escapeHtml(str) {
@@ -539,7 +475,7 @@
 
         window.onload = () => {
             fetchTeams();
-            setInterval(fetchTeams, 10000);
+            setInterval(fetchTeams, 10000); // Se actualiza automáticamente cada 10 segundos
         };
     </script>
 </body>
