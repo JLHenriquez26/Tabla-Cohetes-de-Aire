@@ -46,7 +46,6 @@
             position: relative;
         }
 
-        /* Estilo del Logo centrado arriba del todo */
         .logo-container {
             margin-bottom: 1.25rem;
             display: flex;
@@ -77,7 +76,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* Botón Modo Admin Oculto / Transparente pero clickeable */
         .admin-toggle-btn {
             position: absolute;
             top: 0;
@@ -91,7 +89,6 @@
             z-index: 10;
         }
 
-        /* Tarjeta de Formulario (Oculta por defecto) */
         .admin-panel {
             display: none;
             background: var(--card-bg);
@@ -163,11 +160,8 @@
             transition: opacity 0.2s;
         }
 
-        .btn-submit:hover {
-            opacity: 0.9;
-        }
+        .btn-submit:hover { opacity: 0.9; }
 
-        /* Contenedor de Búsqueda */
         .controls-wrapper {
             display: flex;
             justify-content: flex-end;
@@ -192,9 +186,7 @@
             transition: border-color 0.2s;
         }
 
-        .search-input:focus {
-            border-color: var(--neon-green);
-        }
+        .search-input:focus { border-color: var(--neon-green); }
 
         .search-icon {
             position: absolute;
@@ -206,7 +198,6 @@
             pointer-events: none;
         }
 
-        /* Tabla de Posiciones */
         .table-wrapper {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
@@ -242,17 +233,8 @@
             vertical-align: middle;
         }
 
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        tr:nth-child(even) {
-            background-color: rgba(255, 255, 255, 0.015);
-        }
-
-        tr:hover {
-            background-color: rgba(0, 255, 135, 0.03);
-        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: rgba(0, 255, 135, 0.03); }
 
         .pos-badge {
             display: inline-flex;
@@ -303,45 +285,23 @@
             display: none;
         }
 
-        .admin-active .btn-delete {
-            display: inline-block;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 2.5rem 1rem;
-            color: var(--text-muted);
-            font-size: 0.95rem;
-        }
-
-        @media (max-width: 640px) {
-            .title { font-size: 1.6rem; }
-            th, td { padding: 0.8rem 0.75rem; }
-            .controls-wrapper { justify-content: stretch; }
-            .search-box { max-width: 100%; }
-        }
+        .admin-active .btn-delete { display: inline-block; }
+        .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--text-muted); }
     </style>
 </head>
 <body>
 
     <div class="container" id="mainContainer">
         <header>
-            <!-- Botón invisible situado en la esquina superior derecha -->
             <button class="admin-toggle-btn" onclick="toggleAdminMode()" id="adminBtn" title="Admin"></button>
-            
-            <!-- Logo centrado arriba del todo -->
             <div class="logo-container">
                 <img src="tecnologico-de-monterrey-blue.png" alt="Tecnológico de Monterrey">
             </div>
-
-            <!-- Título y subtítulo -->
             <h1 class="title">🚀 Competencia de Cohetes de Aire 🚀</h1>
             <p class="subtitle">UNIDAD DE FORMACIÓN F1025B</p>
-            <p class="subtitle"> </p>
             <p class="subtitle">Tabla de Posiciones General</p>
         </header>
 
-        <!-- Panel de Administración -->
         <div class="admin-panel" id="adminPanel">
             <div class="admin-panel-header">
                 <span class="admin-title">📝 Registrar Nuevo Lanzamiento</span>
@@ -374,7 +334,6 @@
             </form>
         </div>
 
-        <!-- Barra de Búsqueda -->
         <div class="controls-wrapper">
             <div class="search-box">
                 <span class="search-icon">🔍</span>
@@ -382,7 +341,6 @@
             </div>
         </div>
 
-        <!-- Tabla de Clasificación -->
         <div class="table-wrapper">
             <table>
                 <thead>
@@ -402,11 +360,9 @@
     </div>
 
     <script>
-        /////
         const ADMIN_PASS_ENCODED = "Um9ja2V0YWRtaW5TcGFjZQ==";
         let isAdmin = false;
-
-        let teams = JSON.parse(localStorage.getItem('rocket_teams')) || [];
+        let teams = JSON.parse(localStorage.getItem('rocket_teams_aire')) || [];
 
         function calculateError(theoretical, sensor) {
             if (!theoretical || theoretical === 0) return 0;
@@ -418,7 +374,6 @@
             if (!isAdmin) {
                 const pass = prompt("Ingrese la contraseña de administrador:");
                 if (pass !== null) {
-                    // Compara la contraseña ingresada decodificando la clave interna
                     if (pass === atob(ADMIN_PASS_ENCODED)) {
                         isAdmin = true;
                         document.getElementById('adminPanel').classList.add('active');
@@ -437,27 +392,16 @@
 
         function renderLeaderboard() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-
-            const sorted = [...teams].sort((a, b) => {
-                return calculateError(a.theoreticalHeight, a.sensorHeight) - calculateError(b.theoreticalHeight, b.sensorHeight);
-            });
+            const sorted = [...teams].sort((a, b) => calculateError(a.theoreticalHeight, a.sensorHeight) - calculateError(b.theoreticalHeight, b.sensorHeight));
 
             let currentPos = 1;
             const rankedTeams = sorted.map((item, index) => {
                 const errorPct = calculateError(item.theoreticalHeight, item.sensorHeight);
-                
                 if (index > 0) {
                     const prevErrorPct = calculateError(sorted[index - 1].theoreticalHeight, sorted[index - 1].sensorHeight);
-                    if (errorPct !== prevErrorPct) {
-                        currentPos = index + 1;
-                    }
+                    if (errorPct !== prevErrorPct) currentPos = index + 1;
                 }
-                
-                return {
-                    ...item,
-                    pos: currentPos,
-                    errorPct: errorPct
-                };
+                return { ...item, pos: currentPos, errorPct: errorPct };
             });
 
             const filteredTeams = rankedTeams.filter(item => 
@@ -470,21 +414,12 @@
             tbody.innerHTML = '';
 
             if (filteredTeams.length === 0) {
-                const emptyText = teams.length === 0 
-                    ? "Aún no hay equipos registrados."
-                    : "No se encontraron resultados que coincidan con la búsqueda.";
-
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="7" class="empty-state">${emptyText}</td>
-                    </tr>
-                `;
+                tbody.innerHTML = `<tr><td colspan="7" class="empty-state">${teams.length === 0 ? "Aún no hay equipos registrados." : "No se encontraron resultados."}</td></tr>`;
                 return;
             }
 
             filteredTeams.forEach((item) => {
                 const pos = item.pos;
-
                 let badgeHtml = `<span class="pos-badge">${pos}</span>`;
                 if (pos === 1) badgeHtml = `<span class="pos-badge pos-1">🥇 1</span>`;
                 else if (pos === 2) badgeHtml = `<span class="pos-badge pos-2">🥈 2</span>`;
@@ -501,9 +436,7 @@
                     <td style="text-align: center;">${item.theoreticalHeight} m</td>
                     <td style="text-align: center;">${item.sensorHeight} m</td>
                     <td class="error-val">${item.errorPct}%</td>
-                    <td style="text-align: center;">
-                        ${isAdmin ? `<button class="btn-delete" onclick="deleteTeam(${item.id})">🗑️</button>` : ''}
-                    </td>
+                    <td style="text-align: center;">${isAdmin ? `<button class="btn-delete" onclick="deleteTeam(${item.id})">🗑️</button>` : ''}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -519,7 +452,6 @@
                 theoreticalHeight: parseFloat(document.getElementById('theoreticalHeight').value),
                 sensorHeight: parseFloat(document.getElementById('sensorHeight').value)
             };
-
             teams.push(newTeam);
             saveAndRender();
             document.getElementById('rocketForm').reset();
@@ -533,7 +465,7 @@
         }
 
         function saveAndRender() {
-            localStorage.setItem('rocket_teams', JSON.stringify(teams));
+            localStorage.setItem('rocket_teams_aire', JSON.stringify(teams));
             renderLeaderboard();
         }
 
