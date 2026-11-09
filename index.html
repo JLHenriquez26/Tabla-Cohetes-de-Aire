@@ -75,19 +75,21 @@
             letter-spacing: 0.5px;
         }
 
+        /* Botón invisible de administrador en la esquina superior derecha */
         .admin-toggle-btn {
             position: absolute;
             top: 0;
             right: 0;
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             background: transparent;
             border: none;
-            color: transparent;
+            outline: none;
             cursor: pointer;
-            z-index: 10;
+            z-index: 50;
         }
 
+        /* Panel de administración (Oculto por defecto) */
         .admin-panel {
             display: none;
             background: var(--card-bg);
@@ -98,7 +100,9 @@
             box-shadow: 0 0 15px rgba(0, 255, 135, 0.15);
         }
 
-        .admin-panel.active { display: block; }
+        .admin-panel.active { 
+            display: block; 
+        }
 
         .admin-panel-header {
             display: flex;
@@ -159,14 +163,8 @@
 
         .controls-wrapper {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            justify-content: flex-end;
             margin-bottom: 1rem;
-        }
-
-        .loading-text {
-            font-size: 0.85rem;
-            color: var(--neon-green);
         }
 
         .search-box {
@@ -281,8 +279,8 @@
 
     <div class="container" id="mainContainer">
         <header>
-            <!-- Botón invisible en la esquina superior derecha para abrir admin -->
-            <button class="admin-toggle-btn" onclick="toggleAdminMode()" id="adminBtn" title="Admin"></button>
+            <!-- Árbol invisible de acceso administrador (haz clic en la esquina superior derecha del encabezado) -->
+            <button class="admin-toggle-btn" onclick="toggleAdminMode()" id="adminBtn" title="Administrador"></button>
             <div class="logo-container">
                 <img src="tecnologico-de-monterrey-blue.png" alt="Tecnológico de Monterrey">
             </div>
@@ -291,7 +289,7 @@
             <p class="subtitle">Tabla de Posiciones General</p>
         </header>
 
-        <!-- Panel de Administración (Formulario) -->
+        <!-- Panel de Administración para el registro -->
         <div class="admin-panel" id="adminPanel">
             <div class="admin-panel-header">
                 <span class="admin-title">📝 Registrar Nuevo Lanzamiento</span>
@@ -325,7 +323,6 @@
         </div>
 
         <div class="controls-wrapper">
-            <div id="statusMsg" class="loading-text">🔄 Sincronizando datos...</div>
             <div class="search-box">
                 <span class="search-icon">🔍</span>
                 <input type="text" id="searchInput" class="search-input" placeholder="Buscar equipo, cohete o grupo..." oninput="renderLeaderboard()">
@@ -336,12 +333,12 @@
             <table>
                 <thead>
                     <tr>
-                        <th style="text-align: center; width: 70px;">Pos</th>
-                        <th style="text-align: center;">Grupo</th>
-                        <th>Equipo / Cohete</th>
-                        <th style="text-align: center;">Alt. Teórica</th>
-                        <th style="text-align: center;">Alt. Sensor</th>
-                        <th style="text-align: right;">% Error</th>
+                        <th style="text-align: center; width: 70px;">POS</th>
+                        <th style="text-align: center;">GRUPO</th>
+                        <th>EQUIPO / COHETE</th>
+                        <th style="text-align: center;">ALT. TEÓRICA</th>
+                        <th style="text-align: center;">ALT. SENSOR</th>
+                        <th style="text-align: right;">% ERROR</th>
                     </tr>
                 </thead>
                 <tbody id="leaderboardBody"></tbody>
@@ -350,7 +347,7 @@
     </div>
 
     <script>
-        // PEGA AQUÍ ABAJO TU URL DE GOOGLE APPS SCRIPT ENTRE LAS COMILLAS
+        // Inserte su URL de Google Apps Script entre las comillas
         const WEB_APP_URL = "PEGAR_AQUÍ_TU_URL_DE_GOOGLE_APPS_SCRIPT";
         
         const ADMIN_PASS_ENCODED = "Um9ja2V0YWRtaW5TcGFjZQ==";
@@ -369,30 +366,24 @@
                 if (pass !== null) {
                     if (pass === atob(ADMIN_PASS_ENCODED)) {
                         isAdmin = true;
-                        document.getElementById('adminPanel').classList.add('active'); // <-- Esto abre el panel
+                        document.getElementById('adminPanel').classList.add('active');
                     } else {
                         alert("Contraseña incorrecta");
                     }
                 }
             } else {
                 isAdmin = false;
-                document.getElementById('adminPanel').classList.remove('active'); // <-- Esto lo cierra
+                document.getElementById('adminPanel').classList.remove('active');
             }
         }
 
-        // Cargar datos desde Google Sheets al abrir la página
         async function fetchTeams() {
-            if (WEB_APP_URL.includes("PEGAR_AQUÍ")) {
-                document.getElementById('statusMsg').innerText = "⚠️ Falta configurar la URL de Google Sheets";
-                return;
-            }
+            if (WEB_APP_URL.includes("PEGAR_AQUÍ")) return;
             try {
                 const response = await fetch(WEB_APP_URL);
                 teams = await response.json();
-                document.getElementById('statusMsg').innerText = "✅ Sincronizado en tiempo real";
                 renderLeaderboard();
             } catch (error) {
-                document.getElementById('statusMsg').innerText = "❌ Error de conexión";
                 console.error("Error al obtener datos:", error);
             }
         }
