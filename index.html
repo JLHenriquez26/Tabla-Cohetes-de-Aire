@@ -89,7 +89,7 @@
             z-index: 50;
         }
 
-        /* Panel de administración (Oculto por defecto) */
+        /* Panel de Administración (Oculto por defecto) */
         .admin-panel {
             display: none;
             background: var(--card-bg);
@@ -279,7 +279,7 @@
 
     <div class="container" id="mainContainer">
         <header>
-            <!-- Árbol invisible de acceso administrador (haz clic en la esquina superior derecha del encabezado) -->
+            <!-- Botón invisible para activar el panel de administrador -->
             <button class="admin-toggle-btn" onclick="toggleAdminMode()" id="adminBtn" title="Administrador"></button>
             <div class="logo-container">
                 <img src="tecnologico-de-monterrey-blue.png" alt="Tecnológico de Monterrey">
@@ -347,7 +347,7 @@
     </div>
 
     <script>
-        // Inserte su URL de Google Apps Script entre las comillas
+        // Pega aquí tu URL de Google Apps Script entre las comillas
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwtKBNGjlBFwHBTVGtQ-aSc9DjbpUreL9qJNMSkvk_iUCAr4mHgKXLRGtJJYLThA1CIxA/exec";
         
         const ADMIN_PASS_ENCODED = "Um9ja2V0YWRtaW5TcGFjZQ==";
@@ -361,24 +361,25 @@
         }
 
         function toggleAdminMode() {
+            const panel = document.getElementById('adminPanel');
             if (!isAdmin) {
                 const pass = prompt("Ingrese la contraseña de administrador:");
                 if (pass !== null) {
                     if (pass === atob(ADMIN_PASS_ENCODED)) {
                         isAdmin = true;
-                        document.getElementById('adminPanel').classList.add('active');
+                        panel.classList.add('active');
                     } else {
                         alert("Contraseña incorrecta");
                     }
                 }
             } else {
                 isAdmin = false;
-                document.getElementById('adminPanel').classList.remove('active');
+                panel.classList.remove('active');
             }
         }
 
         async function fetchTeams() {
-            if (WEB_APP_URL.includes("PEGAR_AQUÍ")) return;
+            if (WEB_APP_URL.includes("PEGAR_AQUÍ") || WEB_APP_URL.includes("TU_URL_REAL_AQUI")) return;
             try {
                 const response = await fetch(WEB_APP_URL);
                 teams = await response.json();
@@ -463,6 +464,7 @@
 
                 document.getElementById('rocketForm').reset();
                 document.getElementById('adminPanel').classList.remove('active');
+                isAdmin = false;
                 
                 setTimeout(fetchTeams, 1500);
             } catch (error) {
