@@ -90,7 +90,7 @@
             z-index: 50;
         }
 
-        /* Panel de Administración (Oculto por defecto) */
+        /* Panel de Administración */
         .admin-panel {
             display: none;
             background: var(--card-bg);
@@ -281,20 +281,18 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 0.85rem;
-            display: none;
             transition: background 0.2s;
         }
         .btn-delete:hover { background: rgba(239, 68, 68, 0.15); }
-        .admin-mode .btn-delete { display: inline-block; }
 
         .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--text-muted); }
     </style>
 </head>
-<body id="bodyTag">
+<body>
 
-    <div class="container" id="mainContainer">
+    <div class="container">
         <header>
-            <button class="admin-toggle-btn" onclick="toggleAdminMode()" id="adminBtn" title="Administrador"></button>
+            <button class="admin-toggle-btn" onclick="toggleAdminMode()" title="Administrador"></button>
             <div class="logo-container">
                 <img src="tecnologico-de-monterrey-blue.png" alt="Tecnológico de Monterrey">
             </div>
@@ -352,7 +350,7 @@
                         <th style="text-align: center;">ALT. TEÓRICA</th>
                         <th style="text-align: center;">ALT. SENSOR</th>
                         <th style="text-align: right;">% ERROR</th>
-                        <th style="text-align: center; width: 90px; display: none;" id="thAction">ACCIONES</th>
+                        <th style="text-align: center; width: 90px;" id="thAction">ACCIONES</th>
                     </tr>
                 </thead>
                 <tbody id="leaderboardBody"></tbody>
@@ -376,7 +374,6 @@
 
         function toggleAdminMode() {
             const panel = document.getElementById('adminPanel');
-            const bodyTag = document.getElementById('bodyTag');
             const thAction = document.getElementById('thAction');
 
             if (!isAdmin) {
@@ -385,8 +382,7 @@
                     if (pass === atob(ADMIN_PASS_ENCODED)) {
                         isAdmin = true;
                         panel.classList.add('active');
-                        bodyTag.classList.add('admin-mode');
-                        if(thAction) thAction.style.display = 'table-cell';
+                        thAction.style.display = 'table-cell';
                         renderLeaderboard();
                     } else {
                         alert("Contraseña incorrecta");
@@ -395,8 +391,7 @@
             } else {
                 isAdmin = false;
                 panel.classList.remove('active');
-                bodyTag.classList.remove('admin-mode');
-                if(thAction) thAction.style.display = 'none';
+                thAction.style.display = 'none';
                 renderLeaderboard();
             }
         }
@@ -434,6 +429,8 @@
 
             const tbody = document.getElementById('leaderboardBody');
             tbody.innerHTML = '';
+            const thAction = document.getElementById('thAction');
+            if(thAction) thAction.style.display = isAdmin ? 'table-cell' : 'none';
 
             if (filteredTeams.length === 0) {
                 const colSpan = isAdmin ? 7 : 6;
@@ -449,6 +446,7 @@
                 else if (pos === 3) badgeHtml = `<span class="pos-badge pos-3">🥉 3</span>`;
 
                 const tr = document.createElement('tr');
+                
                 let adminCellHtml = '';
                 if (isAdmin) {
                     adminCellHtml = `<td style="text-align: center;"><button class="btn-delete" onclick="deleteTeam(${item.id})">🗑️ Borrar</button></td>`;
@@ -494,6 +492,8 @@
 
                 document.getElementById('rocketForm').reset();
                 document.getElementById('adminPanel').classList.remove('active');
+                isAdmin = false;
+                document.getElementById('thAction').style.display = 'none';
                 
                 setTimeout(fetchTeams, 1500);
             } catch (error) {
