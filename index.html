@@ -271,7 +271,10 @@
                 const errorPct = calculateError(item.theoreticalHeight, item.sensorHeight);
                 if (index > 0) {
                     const prevErrorPct = calculateError(sorted[index - 1].theoreticalHeight, sorted[index - 1].sensorHeight);
-                    if (errorPct !== prevErrorPct) currentPos = index + 1;
+                    // Si el porcentaje de error es exactamente igual, comparten la misma posición (empate)
+                    if (errorPct !== prevErrorPct) {
+                        currentPos = index + 1;
+                    }
                 }
                 return { ...item, pos: currentPos, errorPct: errorPct };
             });
