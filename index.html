@@ -226,7 +226,7 @@
                         <th>EQUIPO / COHETE</th>
                         <th style="text-align: center;">ALT. TEÓRICA</th>
                         <th style="text-align: center;">ALT. SENSOR</th>
-                        <th style="text-align: right;">% ERROR</th>
+                        <th style="text-align: right;">DIFERENCIA</th>
                     </tr>
                 </thead>
                 <tbody id="leaderboardBody">
@@ -240,10 +240,11 @@
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzMDHFnR5B4JGWP66-EJa35y3BdOcOygVNWrgB3d5-w68FixJlTqVh_FwY3Q_R3H0UO/exec";
         let teams = [];
 
-        function calculateError(theoretical, sensor) {
+        // Ahora calculamos la diferencia absoluta en metros (ej. |11.4 - 11.38| = 0.02)
+        function calculateDifference(theoretical, sensor) {
             if (!theoretical || theoretical === 0) return 0;
-            const error = (Math.abs(theoretical - sensor) / theoretical) * 100;
-            return Math.round(error * 100) / 100;
+            const diff = Math.abs(theoretical - sensor);
+            return Math.round(diff * 1000) / 1000;
         }
 
         async function fetchTeams() {
@@ -264,19 +265,23 @@
 
         function renderLeaderboard() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-            const sorted = [...teams].sort((a, b) => calculateError(a.theoreticalHeight, a.sensorHeight) - calculateError(b.theoreticalHeight, b.sensorHeight));
+            
+            // Ordenar por menor diferencia absoluta en metros
+            const sorted = [...teams].sort((a, b) => 
+                calculateDifference(a.theoreticalHeight, a.sensorHeight) - calculateDifference(b.theoreticalHeight, b.sensorHeight)
+            );
 
             let currentPos = 1;
             const rankedTeams = sorted.map((item, index) => {
-                const errorPct = calculateError(item.theoreticalHeight, item.sensorHeight);
+                const diffVal = calculateDifference(item.theoreticalHeight, item.sensorHeight);
                 if (index > 0) {
-                    const prevErrorPct = calculateError(sorted[index - 1].theoreticalHeight, sorted[index - 1].sensorHeight);
-                    // Si el porcentaje de error es exactamente igual, comparten la misma posición (empate)
-                    if (errorPct !== prevErrorPct) {
+                    const prevDiffVal = calculateDifference(sorted[index - 1].theoreticalHeight, sorted[index - 1].sensorHeight);
+                    // Si la diferencia en metros es exactamente igual, comparten la misma posición (empate)
+                    if (diffVal !== prevDiffVal) {
                         currentPos = index + 1;
                     }
                 }
-                return { ...item, pos: currentPos, errorPct: errorPct };
+                return { ...item, pos: currentPos, diffVal: diffVal };
             });
 
             const filteredTeams = rankedTeams.filter(item => 
@@ -310,7 +315,7 @@
                     </td>
                     <td style="text-align: center;">${item.theoreticalHeight} m</td>
                     <td style="text-align: center;">${item.sensorHeight} m</td>
-                    <td class="error-val">${item.errorPct}%</td>
+                    <td class="error-val">${item.diffVal} m</td>
                 `;
                 tbody.appendChild(tr);
             });
