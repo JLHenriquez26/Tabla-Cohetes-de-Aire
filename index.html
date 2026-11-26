@@ -75,6 +75,61 @@
             letter-spacing: 0.5px;
         }
 
+        /* Apartado Mención Especial: Máxima Altura */
+        .special-mention-card {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(17, 24, 39, 0.95));
+            border: 1px solid rgba(251, 191, 36, 0.55);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.75rem;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.12);
+        }
+
+        .special-mention-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--gold);
+            font-size: 0.85rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: 0.85rem;
+        }
+
+        .special-mention-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .special-winner-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex: 1 1 280px;
+            background: rgba(9, 13, 22, 0.65);
+            border: 1px solid rgba(251, 191, 36, 0.25);
+            border-radius: 10px;
+            padding: 0.85rem 1.1rem;
+            gap: 1rem;
+        }
+
+        .special-winner-meta {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.15rem;
+        }
+
+        .special-height-badge {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--gold);
+            white-space: nowrap;
+        }
+
         .controls-wrapper {
             display: flex;
             justify-content: space-between;
@@ -209,6 +264,22 @@
             <p class="subtitle">Tabla de Posiciones General</p>
         </header>
 
+        <section class="special-mention-card" aria-label="Mención especial por alcanzar la máxima altura">
+            <div class="special-mention-header">
+                <span>🏅</span>
+                <span>Mención Especial por Alcanzar la Máxima Altura</span>
+            </div>
+            <div class="special-mention-list" id="maxHeightMention">
+                <div class="special-winner-item">
+                    <div>
+                        <div class="team-name">Esperando registros...</div>
+                        <div class="special-meta">Se mostrará el equipo con mayor altura de sensor</div>
+                    </div>
+                    <div class="special-height-badge">-- m</div>
+                </div>
+            </div>
+        </section>
+
         <div class="controls-wrapper">
             <div class="sync-status" id="syncStatus">🔄 Sincronizando datos con la nube...</div>
             <div class="search-box">
@@ -240,11 +311,41 @@
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzMDHFnR5B4JGWP66-EJa35y3BdOcOygVNWrgB3d5-w68FixJlTqVh_FwY3Q_R3H0UO/exec";
         let teams = [];
 
-        // Ahora calculamos la diferencia absoluta en metros (ej. |11.4 - 11.38| = 0.02)
         function calculateDifference(theoretical, sensor) {
             if (!theoretical || theoretical === 0) return 0;
             const diff = Math.abs(theoretical - sensor);
             return Math.round(diff * 1000) / 1000;
+        }
+
+        function renderMaxHeightMention() {
+            const container = document.getElementById('maxHeightMention');
+            const validTeams = teams.filter(item => !Number.isNaN(parseFloat(item.sensorHeight)));
+
+            if (validTeams.length === 0) {
+                container.innerHTML = `
+                    <div class="special-winner-item">
+                        <div>
+                            <div class="team-name">Sin registros disponibles</div>
+                            <div class="special-mention-meta">Aún no hay alturas registradas en la nube</div>
+                        </div>
+                        <div class="special-height-badge">-- m</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const maxHeight = Math.max(...validTeams.map(item => parseFloat(item.sensorHeight)));
+            const topTeams = validTeams.filter(item => parseFloat(item.sensorHeight) === maxHeight);
+
+            container.innerHTML = topTeams.map(item => `
+                <div class="special-winner-item">
+                    <div>
+                        <div class="team-name">${escapeHtml(item.team || 'Sin equipo')}</div>
+                        <div class="special-mention-meta">Cohete: ${escapeHtml(item.rocket || '-')} · Grupo: ${escapeHtml(item.group || '-')}</div>
+                    </div>
+                    <div class="special-height-badge">${maxHeight} m</div>
+                </div>
+            `).join('');
         }
 
         async function fetchTeams() {
@@ -252,6 +353,7 @@
             try {
                 const response = await fetch(WEB_APP_URL);
                 teams = await response.json();
+                renderMaxHeightMention();
                 renderLeaderboard();
                 
                 const now = new Date();
@@ -266,7 +368,6 @@
         function renderLeaderboard() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
             
-            // Ordenar por menor diferencia absoluta en metros
             const sorted = [...teams].sort((a, b) => 
                 calculateDifference(a.theoreticalHeight, a.sensorHeight) - calculateDifference(b.theoreticalHeight, b.sensorHeight)
             );
@@ -276,7 +377,6 @@
                 const diffVal = calculateDifference(item.theoreticalHeight, item.sensorHeight);
                 if (index > 0) {
                     const prevDiffVal = calculateDifference(sorted[index - 1].theoreticalHeight, sorted[index - 1].sensorHeight);
-                    // Si la diferencia en metros es exactamente igual, comparten la misma posición (empate)
                     if (diffVal !== prevDiffVal) {
                         currentPos = index + 1;
                     }
