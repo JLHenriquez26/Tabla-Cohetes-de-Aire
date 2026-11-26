@@ -75,6 +75,44 @@
             letter-spacing: 0.5px;
         }
 
+        /* Apartado Podio */
+        .podium-section {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+        }
+
+        .podium-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--neon-green);
+            font-size: 0.85rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: 1rem;
+        }
+
+        .podium-table-wrapper {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid var(--card-border);
+        }
+
+        .podium-table th {
+            background-color: #162032;
+            padding: 0.8rem 1rem;
+            font-size: 0.75rem;
+        }
+
+        .podium-table td {
+            padding: 0.9rem 1rem;
+        }
+
         /* Apartado Mención Especial: Máxima Altura */
         .special-mention-card {
             background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(17, 24, 39, 0.95));
@@ -117,7 +155,7 @@
             gap: 1rem;
         }
 
-        .special-winner-meta {
+        .special-mention-meta {
             font-size: 0.85rem;
             color: var(--text-muted);
             margin-top: 0.15rem;
@@ -264,6 +302,30 @@
             <p class="subtitle">Tabla de Posiciones General</p>
         </header>
 
+        <section class="podium-section" aria-label="Podio de la competencia">
+            <div class="podium-header">
+                <span>🏆</span>
+                <span>Podio (Incluyendo Empates)</span>
+            </div>
+            <div class="podium-table-wrapper">
+                <table class="podium-table">
+                    <thead>
+                        <tr>
+                            <th style="text-align: center; width: 70px;">POS</th>
+                            <th style="text-align: center;">GRUPO</th>
+                            <th>EQUIPO / COHETE</th>
+                            <th style="text-align: center;">ALT. TEÓRICA</th>
+                            <th style="text-align: center;">ALT. SENSOR</th>
+                            <th style="text-align: right;">DIFERENCIA</th>
+                        </tr>
+                    </thead>
+                    <tbody id="podiumBody">
+                        <tr><td colspan="6" class="empty-state">Cargando podio...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
         <section class="special-mention-card" aria-label="Mención especial por alcanzar la máxima altura">
             <div class="special-mention-header">
                 <span>🏅</span>
@@ -273,7 +335,7 @@
                 <div class="special-winner-item">
                     <div>
                         <div class="team-name">Esperando registros...</div>
-                        <div class="special-meta">Se mostrará el equipo con mayor altura de sensor</div>
+                        <div class="special-mention-meta">Se mostrará el equipo con mayor altura de sensor</div>
                     </div>
                     <div class="special-height-badge">-- m</div>
                 </div>
@@ -315,6 +377,63 @@
             if (!theoretical || theoretical === 0) return 0;
             const diff = Math.abs(theoretical - sensor);
             return Math.round(diff * 1000) / 1000;
+        }
+
+        function getRankedTeams() {
+            const sorted = [...teams].sort((a, b) =>
+                calculateDifference(a.theoreticalHeight, a.sensorHeight) - calculateDifference(b.theoreticalHeight, b.sensorHeight)
+            );
+
+            let currentPos = 1;
+            return sorted.map((item, index) => {
+                const diffVal = calculateDifference(item.theoreticalHeight, item.sensorHeight);
+                if (index > 0) {
+                    const prevDiffVal = calculateDifference(sorted[index - 1].theoreticalHeight, sorted[index - 1].sensorHeight);
+                    if (diffVal !== prevDiffVal) {
+                        currentPos = index + 1;
+                    }
+                }
+                return { ...item, pos: currentPos, diffVal: diffVal };
+            });
+        }
+
+        function getPositionBadge(pos) {
+            if (pos === 1) return `<span class="pos-badge pos-1">🥇 1</span>`;
+            if (pos === 2) return `<span class="pos-badge pos-2">🥈 2</span>`;
+            if (pos === 3) return `<span class="pos-badge pos-3">🥉 3</span>`;
+            return `<span class="pos-badge">${pos}</span>`;
+        }
+
+        function buildRowHtml(item) {
+            return `
+                <td style="text-align: center;">${getPositionBadge(item.pos)}</td>
+                <td style="text-align: center;"><span class="group-tag">${escapeHtml(item.group || '-')}</span></td>
+                <td>
+                    <div class="team-name">${escapeHtml(item.team)}</div>
+                    <div class="rocket-name">Cohete: ${escapeHtml(item.rocket)}</div>
+                </td>
+                <td style="text-align: center;">${item.theoreticalHeight} m</td>
+                <td style="text-align: center;">${item.sensorHeight} m</td>
+                <td class="error-val">${item.diffVal} m</td>
+            `;
+        }
+
+        function renderPodium(rankedTeams) {
+            const podiumBody = document.getElementById('podiumBody');
+            const podiumTeams = rankedTeams.filter(item => item.pos <= 3);
+
+            podiumBody.innerHTML = '';
+
+            if (podiumTeams.length === 0) {
+                podiumBody.innerHTML = `<tr><td colspan="6" class="empty-state">Aún no hay equipos en el podio.</td></tr>`;
+                return;
+            }
+
+            podiumTeams.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = buildRowHtml(item);
+                podiumBody.appendChild(tr);
+            });
         }
 
         function renderMaxHeightMention() {
@@ -367,22 +486,9 @@
 
         function renderLeaderboard() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-            
-            const sorted = [...teams].sort((a, b) => 
-                calculateDifference(a.theoreticalHeight, a.sensorHeight) - calculateDifference(b.theoreticalHeight, b.sensorHeight)
-            );
+            const rankedTeams = getRankedTeams();
 
-            let currentPos = 1;
-            const rankedTeams = sorted.map((item, index) => {
-                const diffVal = calculateDifference(item.theoreticalHeight, item.sensorHeight);
-                if (index > 0) {
-                    const prevDiffVal = calculateDifference(sorted[index - 1].theoreticalHeight, sorted[index - 1].sensorHeight);
-                    if (diffVal !== prevDiffVal) {
-                        currentPos = index + 1;
-                    }
-                }
-                return { ...item, pos: currentPos, diffVal: diffVal };
-            });
+            renderPodium(rankedTeams);
 
             const filteredTeams = rankedTeams.filter(item => 
                 (item.group && item.group.toLowerCase().includes(searchTerm)) ||
@@ -399,24 +505,8 @@
             }
 
             filteredTeams.forEach((item) => {
-                const pos = item.pos;
-                let badgeHtml = `<span class="pos-badge">${pos}</span>`;
-                if (pos === 1) badgeHtml = `<span class="pos-badge pos-1">🥇 1</span>`;
-                else if (pos === 2) badgeHtml = `<span class="pos-badge pos-2">🥈 2</span>`;
-                else if (pos === 3) badgeHtml = `<span class="pos-badge pos-3">🥉 3</span>`;
-
                 const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="text-align: center;">${badgeHtml}</td>
-                    <td style="text-align: center;"><span class="group-tag">${escapeHtml(item.group || '-')}</span></td>
-                    <td>
-                        <div class="team-name">${escapeHtml(item.team)}</div>
-                        <div class="rocket-name">Cohete: ${escapeHtml(item.rocket)}</div>
-                    </td>
-                    <td style="text-align: center;">${item.theoreticalHeight} m</td>
-                    <td style="text-align: center;">${item.sensorHeight} m</td>
-                    <td class="error-val">${item.diffVal} m</td>
-                `;
+                tr.innerHTML = buildRowHtml(item);
                 tbody.appendChild(tr);
             });
         }
